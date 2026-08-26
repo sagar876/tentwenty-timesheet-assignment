@@ -1,199 +1,237 @@
 # Tentwenty Timesheet Management
 
-## Overview
+## 1. What is this project?
 
-A simplified SaaS-style timesheet management application built for the
-Tentwenty Frontend Developer assessment. Users sign in, view their weekly
-timesheets, drill into a week to see entries grouped by day, and add or edit
-entries through a shared form. All data is served through internal API
-routes backed by an in-memory mock data layer.
+This is a Timesheet Management web app, built for the Tentwenty frontend
+developer assessment.
 
-## Features
+A user logs in, sees a list of their weekly timesheets, and can open any
+week to see the individual entries for that week, grouped by day. From
+there they can add, edit, or delete entries.
 
-- Email/password login with dummy credentials, protected by NextAuth
-- Protected dashboard and week-detail routes (redirect to `/login` when unauthenticated)
-- Weekly timesheet list with Week #, Date, Status, and Actions columns
-- Date-range and status filtering, with pagination (selectable page size)
-- Week-detail view: entries grouped by day, with a running hours-logged progress bar
-- Add and edit timesheet entries through one shared modal form
-- Client-side validation (React Hook Form + Zod) and the same schema re-validated server-side
-- Loading and error (with retry) states on the dashboard and week-detail views, plus an empty state on the dashboard when filters return no results
-- Responsive layout (desktop, tablet, mobile)
+Main features:
 
-## Tech Stack
+- Login (with a dummy test account)
+- Dashboard with a list of weekly timesheets
+- Sorting the timesheet list
+- Filtering by date range and status
+- Opening a week to see its details
+- Adding, editing, and deleting entries
+- Form validation (with clear error messages)
+- Loading and error states
+- A layout that works on desktop, tablet, and mobile
 
-- **Next.js 16** (App Router)
-- **TypeScript** (strict mode)
-- **Tailwind CSS v4**
-- **Inter** (Google Font, via `next/font/google`)
-- **NextAuth v5** (Credentials provider, JWT sessions)
-- **shadcn/ui** (Button, Input, Label, Textarea, Badge, Table, Select, Checkbox, Dialog — built on Radix UI / Base UI)
-- **React Hook Form**
-- **Zod**
-- **Jest** + **React Testing Library**
+All the data in this app is fake ("mock data"). There is no real
+database — see [Assumptions](#7-assumptions) below for why.
 
-## Architecture
+## 2. Technologies used
 
-The codebase is organized by feature ownership rather than technical layer:
+This list only includes packages that are actually used in the project
+(checked against `package.json`).
+
+- **Next.js** — the framework. Used for the pages and the internal API
+  routes.
+- **React** — used to build the UI.
+- **TypeScript** — used everywhere for type safety.
+- **Tailwind CSS** — used for styling.
+- **shadcn/ui** — used for reusable UI parts like buttons, dialogs,
+  dropdowns, and inputs. These are built on top of Radix UI.
+- **NextAuth (Auth.js)** — used for login and sessions.
+- **React Hook Form** — used to manage form state.
+- **Zod** — used to define validation rules for forms and API input.
+- **Jest** and **React Testing Library** — used for tests.
+
+## 3. Features
+
+- A user can log in using the dummy account (see [How to run the
+  project](#6-how-to-run-the-project) for the credentials).
+- Once logged in, a user sees a list of their weekly timesheets, with a
+  status for each one: Completed, Incomplete, or Missing.
+- A user can sort the list by Week #, Date, or Status. Clicking a column
+  header again reverses the sort order.
+- A user can filter the list by date range and by status.
+- A user can open a week to see its entries, grouped by day, with a
+  progress bar showing hours logged out of 40.
+- A user can add a new entry to any day in the week.
+- A user can edit or delete an existing entry from a small menu on the
+  entry (the three-dot menu).
+- Deleting an entry asks for confirmation first.
+- If a form is submitted with missing or invalid fields (for example, no
+  project selected, or hours outside 1–24), the form shows an error
+  message under each field and does not submit.
+- Hours are whole numbers only, from 1 to 24 per entry.
+- While data is loading, the page shows a simple loading message instead
+  of a blank screen. If a request fails, the page shows an error message
+  with a button to try again.
+- The layout adjusts for smaller screens — the table scrolls sideways
+  instead of breaking the page, and filters/rows stack vertically.
+
+## 4. Project structure
+
+Here's a simple explanation of the main folders inside `src/`.
+
+### `app`
+
+This is where Next.js expects pages and API routes to live. Every file
+named `page.tsx` is a page you can visit in the browser, and every file
+named `route.ts` under `app/api` is a backend endpoint.
+
+The page files themselves are kept short — they mostly just render a
+component from `features/`. The actual page logic lives there, not in
+`app/`.
+
+### `components`
+
+Components that are genuinely used in more than one place and don't
+belong to a specific feature. Right now this is just `AppHeader`, the
+top navigation bar shown on every page.
+
+### `components/ui`
+
+Reusable shadcn UI components, like `Button`, `Dialog`, `DropdownMenu`,
+`Select`, `Table`, and `Tooltip`. These aren't specific to timesheets —
+they're generic building blocks used all over the app.
+
+### `features`
+
+Code that belongs to one specific feature. There are two features:
+`auth` and `timesheets`.
+
+For example, everything related to timesheets — the dashboard table, the
+detail view, the add/edit form, the API calls, and the validation rules
+— lives inside `features/timesheets`. If you're working on timesheets,
+this is the one folder you need to open.
+
+### `server`
+
+Code that should only ever run on the server — never in the browser.
+This is where the mock data lives, along with the functions that read
+and update it. Nothing outside of `server/` is allowed to import from
+it directly (see the next section for why).
+
+### `lib`
+
+Small pieces of code shared across the whole app, not tied to one
+feature. There are only three files here: a helper for reading API
+responses, a helper used by shadcn components for combining CSS classes,
+and a small hook for fetching data.
+
+## 5. How the API works
+
+The UI never reads mock data directly. Every piece of data goes through
+the same path:
 
 ```
-src/
-├── app/          # routing + Next.js special files only (thin route entries)
-├── components/   # genuinely shared UI: ui/ (shadcn primitives), layout/ (AppHeader)
-├── features/     # feature-owned client code
-│   ├── auth/         components/, schemas/
-│   └── timesheets/   components/{dashboard,detail}/, services/, schemas/, types/, utils/
-├── server/       # server-only implementation, grouped the same way
-│   ├── auth/, timesheets/, projects/
-├── lib/          # cross-feature infrastructure only: http.ts, utils.ts, hooks/useFetch.ts
-├── auth.ts       # NextAuth v5 config (root-level, per NextAuth's own convention)
-└── proxy.ts      # route protection (Next 16's renamed middleware.ts)
+UI component
+  → a function in features/*/services (e.g. timesheetsApi.ts)
+  → an internal API route (app/api/**/route.ts)
+  → a server-side service (server/**)
+  → the mock data
+  → a JSON response
+  → back to the UI
 ```
 
-Mock data is never imported directly into React components. Every read or
-write goes through the same path:
+So if a component needs data, it calls a function like
+`getWeeklyTimesheets()`. That function does a normal `fetch()` call to
+one of our own API routes, for example `/api/timesheets`. That route:
 
-```
-Component
-  → feature client API function   (src/features/*/services/*.ts)
-  → internal Next.js API route    (src/app/api/**/route.ts)
-  → server-side service/mock data (src/server/**)
-  → JSON response
-  → UI
-```
+1. Checks that the user is logged in (returns `401` if not).
+2. If it's a `POST` or `PATCH` request, validates the request body using
+   the same Zod schema the form used on the client (returns `400` with
+   the field errors if it's invalid).
+3. Calls a function in `server/` to read or update the mock data.
+4. Sends back a JSON response.
 
-`src/server/**` is imported only by route handlers under `src/app/api/**`
-— no component or client-side module ever reaches into it. A week's
-`status` and `totalHours` are derived from its entries at request time
-rather than stored, so the two can never drift out of sync.
+This means the mock data could be swapped for a real database later
+without changing anything in `features/` or `components/` — only the
+`server/` folder would need to change.
 
-## Authentication
-
-- Dummy credentials against a single hardcoded mock user (see below) —
-  there is no real user database.
-- NextAuth v5 with the Credentials provider and a JWT session strategy (no
-  database adapter).
-- The session lives only in an httpOnly cookie; nothing is stored in
-  `localStorage`.
-- Page routes (`/dashboard`, `/timesheets/*`) are protected by `proxy.ts`
-  (Next 16's renamed `middleware.ts`), which redirects unauthenticated
-  requests to `/login` before the page ever renders.
-- Every API route (`GET`/`POST`/`PATCH`/`DELETE`) independently checks the
-  session and returns `401` if there isn't one — protection doesn't rely
-  solely on the page layer.
-
-### Mock login credentials
-
-```
-email:    john@example.com
-password: password123
-```
-
-## API
-
-| Method | Endpoint | Purpose |
-|---|---|---|
-| `GET` | `/api/timesheets` | Weekly summaries. Query params: `from`, `to`, `status`, `page`, `pageSize` |
-| `GET` | `/api/timesheets/[weekId]` | Week detail: `{ week, entries }` |
-| `POST` | `/api/timesheets/[weekId]/entries` | Create an entry |
-| `PATCH` | `/api/timesheets/[weekId]/entries/[entryId]` | Update an entry |
-| `DELETE` | `/api/timesheets/[weekId]/entries/[entryId]` | Delete an entry |
-| `GET` | `/api/projects` | Project list, for the "Select Project" field |
-| `*` | `/api/auth/[...nextauth]` | NextAuth's own handler (sign in, session, sign out) |
-
-Responses use standard status codes: `200`/`201` on success, `204` on
-delete, `400` for validation failures (with per-field messages), `401` for
-unauthenticated requests, `404` for an unknown week/entry/project, `500`
-for unexpected errors.
-
-## UI
-
-- Built from the supplied Figma screenshots as the visual source of truth —
-  typography, spacing, colors, borders, and component layout were matched
-  against them rather than redesigned.
-- Inter is used throughout the application.
-- Responsive across desktop, tablet, and mobile: the timesheet table
-  scrolls horizontally within its own container below its content width
-  rather than overflowing the page; filters, pagination, and entry rows
-  stack vertically on narrow screens.
-- Interactive primitives (dialog, select, checkbox, and the underlying
-  button/input/label/table/badge/textarea building blocks) are shadcn/ui
-  components, themed to the design's indigo palette rather than shadcn's
-  default neutral theme.
-
-## Getting Started
+## 6. How to run the project
 
 ### Prerequisites
 
 - Node.js 20.9 or later
 - npm
 
-### Installation
+### Install dependencies
 
 ```bash
 npm install
+```
+
+### Set up environment variables
+
+Copy the example file and fill it in:
+
+```bash
 cp .env.example .env.local
 ```
 
-### Environment variables
-
-Only one is required, in `.env.local`:
+Only one value is needed — a secret NextAuth uses to sign the login
+session:
 
 ```
-AUTH_SECRET=   # generate with: openssl rand -base64 32
+AUTH_SECRET=   # generate one with: openssl rand -base64 32
 ```
 
-### Development
+### Run the app
 
 ```bash
 npm run dev
 ```
 
-Runs at [http://localhost:3000](http://localhost:3000), which redirects to
-`/dashboard` (and on to `/login` if you're not signed in).
+Then open [http://localhost:3000](http://localhost:3000). It will
+redirect you to `/dashboard`, and to `/login` if you're not signed in
+yet.
 
-Other scripts: `npm run build`, `npm run start`, `npm run typecheck`, `npm run lint`.
+**Test login:**
 
-## Testing
-
-```bash
-npm run test        # run once
-npm run test:watch  # watch mode
+```
+email:    john@example.com
+password: password123
 ```
 
-79 tests across 15 suites, covering: form validation and submission
-(login, add/edit entry), dashboard and week-detail states (loading, error,
-empty, success), and API route handlers (success, validation failure, not
-found, unauthenticated mutation). Network calls are mocked at the client
-service boundary; no real HTTP requests are made in tests.
+### Other useful commands
 
-## Assumptions
+```bash
+npm run build      # production build
+npm run start       # run the production build
+npm run lint         # check code style
+npm run typecheck  # check TypeScript types
+npm run test         # run all tests once
+npm run test:watch  # run tests in watch mode
+```
 
-- **Mock data lives in memory** for the life of the server process. Creates,
-  updates, and deletes persist for the current session but reset on
-  restart — there is deliberately no database.
-- **Timesheet weeks are a fixed mock dataset** (10 weeks spanning January
-  through March 2024, Monday–Friday), not user-created. "Creating a
-  timesheet" (per the assessment wording) is implemented as creating an
-  entry within an existing week; a week's status changes automatically as
-  entries are added, edited, or removed.
-- **The dashboard's Date Range filter is a set of month presets** (matching
-  the mock data's date span) rather than a calendar range picker — the
-  Figma reference shows a closed dropdown with no way to tell which was
-  intended.
-- **A single mock user** is sufficient for the assessment's scope; there is
-  no sign-up, password reset, or multi-user support.
-- **"Type of work" is a fixed, small vocabulary** (Bug fixes, Feature
-  development, Code review, Testing, Documentation, Meeting) rather than
-  user-managed data.
+## 7. Assumptions
 
-## Limitations
+Some decisions were made to keep the project focused on the assessment,
+rather than building a full production system:
 
-- No persistence beyond the running server process (by design — see
-  Assumptions).
-- No automated end-to-end/browser test coverage — testing is unit and
-  integration level (Jest + React Testing Library) only.
+- **Mock data lives in memory**, not in a database. Any timesheet you
+  add, edit, or delete will look correct while the app is running, but
+  it resets the moment the server restarts.
+- **The list of weeks is fixed** — 10 weeks from January to March 2024,
+  Monday to Friday. Users don't create new weeks; "creating a
+  timesheet" means adding an entry to an existing week, and that week's
+  status updates automatically based on its total hours.
+- **The date range filter is a set of month presets** (January,
+  February, March), not a calendar picker. The design reference showed
+  a closed dropdown, so it wasn't clear which was intended — presets
+  were the simpler, safer choice.
+- **There is only one test user.** There's no sign-up flow, password
+  reset, or support for multiple accounts.
+- **"Type of work" is a fixed list** (Bug fixes, Feature development,
+  Code review, Testing, Documentation, Meeting) rather than something a
+  user can manage themselves.
 
-## Time Spent
+### Known limitations
 
-6 hours
+- No real database — see above.
+- No end-to-end/browser tests. Testing is at the unit and component
+  level only (Jest + React Testing Library) — currently 79 tests across
+  15 test files, covering form validation, loading/error/empty states,
+  and the API routes themselves.
+
+## Time spent
+
+About 6 hours.
