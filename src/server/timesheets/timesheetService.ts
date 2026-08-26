@@ -7,15 +7,15 @@ import type {
   WeekSortField,
   WeekSummary,
 } from "@/features/timesheets/types/timesheet";
-import { WEEKS, findWeekById, type MockWeek } from "@/server/timesheets/weeks";
+import { getAllWeeks, findWeekById, type MockWeek } from "@/server/timesheets/mockWeeks";
 import {
   getEntriesForWeek,
   findEntryById,
   addEntry,
   updateEntry as updateEntryRecord,
   deleteEntry as deleteEntryRecord,
-} from "@/server/timesheets/entries";
-import { findProjectById } from "@/server/projects/projects";
+} from "@/server/timesheets/mockEntries";
+import { findProjectById } from "@/server/projects/mockProjects";
 
 function toSummary(week: MockWeek): WeekSummary {
   const totalHours = getEntriesForWeek(week.id).reduce((sum, entry) => sum + entry.hours, 0);
@@ -60,7 +60,7 @@ function sortSummaries(
 }
 
 export function getWeekSummaries(filters: WeekSummaryFilters = {}): WeekSummaryPage {
-  let summaries = WEEKS.map(toSummary);
+  let summaries = getAllWeeks().map(toSummary);
 
   if (filters.status) {
     summaries = summaries.filter((week) => week.status === filters.status);

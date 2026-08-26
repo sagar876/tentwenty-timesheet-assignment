@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { PROJECTS } from "@/server/projects/projects";
+import { PROJECTS } from "@/server/projects/mockProjects";
 
 export async function GET() {
   try {

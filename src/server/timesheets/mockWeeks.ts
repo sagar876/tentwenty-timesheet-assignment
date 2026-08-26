@@ -58,6 +58,10 @@ export const WEEKS: MockWeek[] = [
   { id: "week-50", weekNumber: 50, startDate: "2024-12-09", endDate: "2024-12-13" },
 ];
 
+export function getAllWeeks(): MockWeek[] {
+  return WEEKS;
+}
+
 export function findWeekById(weekId: string): MockWeek | undefined {
   return WEEKS.find((week) => week.id === weekId);
 }
