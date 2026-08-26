@@ -184,7 +184,7 @@ Then open [http://localhost:3000](http://localhost:3000). It will
 redirect you to `/dashboard`, and to `/login` if you're not signed in
 yet.
 
-**Test login:**
+**Test login:** 
 
 ```
 email:    john@example.com
@@ -232,6 +232,18 @@ rather than building a full production system:
   15 test files, covering form validation, loading/error/empty states,
   and the API routes themselves.
 
+
+## Future Improvements for state management
+
+The current implementation intentionally keeps the state management simple for the scope of this assessment.
+
+If the application grows, the following could be considered:
+
+- **TanStack Query** for server-state management, caching, background refetching, and request synchronization.
+- **Redux Toolkit** if the application develops more complex shared client-side state across multiple features.
+- More comprehensive end-to-end testing for critical user flows.
+- Additional accessibility and cross-browser testing.
+
 ## Time spent
 
-About 6 hours.
+About 6-7 hours.

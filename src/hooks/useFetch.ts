@@ -26,6 +26,10 @@ export function useFetch<T>(
   const [prevDeps, setPrevDeps] = useState(allDeps);
   const fetcherRef = useRef(fetcher);
 
+  // Resetting to a loading state here (during render) rather than in the
+  // effect below, and reading fetcher via a ref, keeps this hook clean under
+  // react-hooks/set-state-in-effect and exhaustive-deps without disabling
+  // either rule.
   if (!areDepsEqual(allDeps, prevDeps)) {
     setPrevDeps(allDeps);
     setState((previous) => ({ ...previous, loading: true, error: null }));

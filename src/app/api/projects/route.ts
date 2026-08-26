@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { getProjects } from "@/server/projects/projectsService";
+import { PROJECTS } from "@/server/projects/projects";
 
 export async function GET() {
   try {
@@ -9,7 +9,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json(getProjects());
+    return NextResponse.json(PROJECTS);
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
