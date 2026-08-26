@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useFetch } from "@/hooks/useFetch";
-import { buildSearchParamsUrl } from "@/lib/urlSearchParams";
+import { buildSearchParamsUrl } from "@/hooks/urlSearchParams";
 import {
   getTimesheetEntries,
   createTimesheet,
