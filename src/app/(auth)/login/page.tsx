@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
 import { LoginForm } from "@/features/auth/components/LoginForm";
+import { persistSession } from "@/server/auth/sessionPersistence";
+import { setRememberedEmail, clearRememberedEmail } from "@/lib/rememberedEmail";
 import type { LoginInput } from "@/features/auth/schemas/loginSchema";
 
 export default function LoginPage() {
@@ -24,6 +26,13 @@ export default function LoginPage() {
       return;
     }
 
+    if (values.rememberMe) {
+      setRememberedEmail(values.email);
+    } else {
+      clearRememberedEmail();
+    }
+
+    await persistSession(Boolean(values.rememberMe));
     router.push("/dashboard");
   }
 

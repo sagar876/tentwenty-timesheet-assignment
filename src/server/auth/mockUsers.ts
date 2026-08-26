@@ -12,6 +12,12 @@ export const MOCK_USERS: MockUser[] = [
     email: "john@example.com",
     password: "password123",
   },
+  {
+    id: "2",
+    name: "Sagar Dixit",
+    email: "sagar@example.com",
+    password: "password1234",
+  },
 ];
 
 export function findUserByCredentials(

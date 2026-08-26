@@ -69,6 +69,23 @@ describe("LoginForm", () => {
     });
   });
 
+  it("includes rememberMe in the submitted values when checked", async () => {
+    const onSubmit = jest.fn();
+    render(<LoginForm onSubmit={onSubmit} />);
+
+    fireEvent.change(screen.getByLabelText(/email/i), {
+      target: { value: "john@example.com" },
+    });
+    fireEvent.change(screen.getByLabelText(/password/i), {
+      target: { value: "password123" },
+    });
+    fireEvent.click(screen.getByLabelText(/remember me/i));
+    fireEvent.click(screen.getByRole("button", { name: /sign in/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0]![0]).toMatchObject({ rememberMe: true });
+  });
+
   it("renders an external error message", () => {
     render(<LoginForm onSubmit={jest.fn()} error="Invalid email or password" />);
 

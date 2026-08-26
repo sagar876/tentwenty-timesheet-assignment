@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { getRememberedEmail } from "@/lib/rememberedEmail";
 import { loginSchema, type LoginInput } from "@/features/auth/schemas/loginSchema";
 
 interface LoginFormProps {
@@ -18,11 +20,22 @@ export function LoginForm({ onSubmit, error }: LoginFormProps) {
     register,
     control,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "", rememberMe: false },
   });
+
+  // Reading localStorage in an effect (rather than in defaultValues) avoids a
+  // server/client hydration mismatch, since /login is statically prerendered.
+  useEffect(() => {
+    const rememberedEmail = getRememberedEmail();
+    if (rememberedEmail) {
+      setValue("email", rememberedEmail);
+      setValue("rememberMe", true);
+    }
+  }, [setValue]);
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="w-full max-w-sm space-y-4" noValidate>
