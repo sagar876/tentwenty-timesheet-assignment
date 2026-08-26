@@ -57,12 +57,23 @@ This list only includes packages that are actually used in the project
   entry (the three-dot menu).
 - Deleting an entry asks for confirmation first.
 - If a form is submitted with missing or invalid fields (for example, no
-  project selected, or hours outside 1–24), the form shows an error
+  project selected, or hours outside 0.25–24), the form shows an error
   message under each field and does not submit.
-- Hours are whole numbers only, from 1 to 24 per entry.
-- While data is loading, the page shows a simple loading message instead
-  of a blank screen. If a request fails, the page shows an error message
-  with a button to try again.
+- Hours accept decimals in quarter-hour steps (0.25), from 0.25 to 24
+  per entry — e.g. 7.5 or 2.25 are valid.
+- "Remember me" on login persists the session across browser restarts
+  when checked (and expires with the browser session when unchecked),
+  and separately remembers the email address for next time — the
+  password is never stored.
+- Pagination, sorting, the status/date filters, and the Add/Edit modal
+  are all reflected in the URL. Refreshing, sharing a link, or using
+  the browser's Back/Forward buttons all restore the same view.
+- The pagination control shows a windowed page range with an ellipsis
+  once there are more pages than fit on screen, instead of listing
+  every page number.
+- While data is loading, the dashboard shows a skeleton/shimmer table;
+  the week-detail view shows a loading message. If a request fails,
+  the page shows an error message with a button to try again.
 - The layout adjusts for smaller screens — the table scrolls sideways
   instead of breaking the page, and filters/rows stack vertically.
 
@@ -105,16 +116,26 @@ this is the one folder you need to open.
 ### `server`
 
 Code that should only ever run on the server — never in the browser.
-This is where the mock data lives, along with the functions that read
-and update it. Nothing outside of `server/` is allowed to import from
-it directly (see the next section for why).
+This is where the mock data lives (`mockWeeks.ts`, `mockEntries.ts`,
+`mockProjects.ts`, `mockUsers.ts` — the `mock` prefix marks the files
+that would be swapped out first if this were ever backed by a real
+database), along with the service functions that read and update it.
+Nothing outside of `server/` is allowed to import the mock data files
+directly (see the next section for why).
+
+### `hooks`
+
+Currently holds `useFetch` (the small data-fetching hook used by both
+the dashboard and the week-detail view) and `urlSearchParams.ts` (a
+plain helper for building/updating URL search params — not a React
+hook, but currently kept alongside `useFetch` here).
 
 ### `lib`
 
-Small pieces of code shared across the whole app, not tied to one
-feature. There are only three files here: a helper for reading API
-responses, a helper used by shadcn components for combining CSS classes,
-and a small hook for fetching data.
+Small non-React pieces of code shared across the whole app: a helper
+for reading API responses, a helper used by shadcn components for
+combining CSS classes, and the localStorage helper behind "remember my
+email" on login.
 
 ## 5. How the API works
 
@@ -184,12 +205,14 @@ Then open [http://localhost:3000](http://localhost:3000). It will
 redirect you to `/dashboard`, and to `/login` if you're not signed in
 yet.
 
-**Test login:** 
+**Test login:**
 
 ```
 email:    john@example.com
 password: password123
 ```
+
+A second mock account also exists (`sagar@example.com` / `password1234`), useful for checking that "Remember me" and the remembered-email behavior are per-account rather than hardcoded to one user.
 
 ### Other useful commands
 
@@ -210,16 +233,20 @@ rather than building a full production system:
 - **Mock data lives in memory**, not in a database. Any timesheet you
   add, edit, or delete will look correct while the app is running, but
   it resets the moment the server restarts.
-- **The list of weeks is fixed** — 10 weeks from January to March 2024,
-  Monday to Friday. Users don't create new weeks; "creating a
+- **The list of weeks is fixed** — 50 weeks from January to December
+  2024, Monday to Friday. Users don't create new weeks; "creating a
   timesheet" means adding an entry to an existing week, and that week's
-  status updates automatically based on its total hours.
+  status updates automatically based on its total hours. (Weeks were
+  expanded from an initial 10 to 50 specifically so pagination has
+  enough real data to page through.)
 - **The date range filter is a set of month presets** (January,
   February, March), not a calendar picker. The design reference showed
   a closed dropdown, so it wasn't clear which was intended — presets
-  were the simpler, safer choice.
-- **There is only one test user.** There's no sign-up flow, password
-  reset, or support for multiple accounts.
+  were the simpler, safer choice. Weeks after March (added for
+  pagination) are reachable via "All dates" and sorting, just not
+  through a dedicated month preset.
+- **There are two test users**, both hardcoded — no sign-up flow,
+  password reset, or real account management.
 - **"Type of work" is a fixed list** (Bug fixes, Feature development,
   Code review, Testing, Documentation, Meeting) rather than something a
   user can manage themselves.
@@ -228,9 +255,12 @@ rather than building a full production system:
 
 - No real database — see above.
 - No end-to-end/browser tests. Testing is at the unit and component
-  level only (Jest + React Testing Library) — currently 79 tests across
-  15 test files, covering form validation, loading/error/empty states,
-  and the API routes themselves.
+  level only (Jest + React Testing Library) — currently 135 tests
+  across 19 test files, covering form validation, loading/error/empty
+  states, URL state (pagination/sorting/filtering/deep-linking), and
+  the API routes themselves. Tests sit beside the file they cover; a
+  local `__tests__/` folder is used where a directory has several
+  related test files (e.g. `features/timesheets/utils/__tests__/`).
 
 
 ## Future Improvements for state management
