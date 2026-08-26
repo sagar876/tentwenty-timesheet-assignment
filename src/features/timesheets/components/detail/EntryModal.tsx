@@ -22,9 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useFetch } from "@/lib/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
 import { getProjects } from "@/features/timesheets/services/projectsApi";
-import { entrySchema, type EntryInput } from "@/features/timesheets/schemas/entrySchema";
+import {
+  entrySchema,
+  HOURS_MAX,
+  HOURS_MIN,
+  HOURS_STEP,
+  type EntryInput,
+} from "@/features/timesheets/schemas/entrySchema";
 import { TYPE_OF_WORK_OPTIONS, type TimesheetEntry, type TypeOfWork } from "@/features/timesheets/types/timesheet";
 
 const ERROR_TEXT_CLASSES = "text-sm text-red-600";
@@ -64,7 +70,7 @@ export function EntryModal({ date, entry, onClose, onSubmit }: EntryModalProps) 
   const hours = watch("hours");
 
   function adjustHours(delta: number) {
-    const next = Math.min(24, Math.max(1, (getValues("hours") || 0) + delta));
+    const next = Math.min(HOURS_MAX, Math.max(HOURS_MIN, (getValues("hours") || 0) + delta));
     setValue("hours", next, { shouldValidate: true });
   }
 
@@ -229,7 +235,7 @@ export function EntryModal({ date, entry, onClose, onSubmit }: EntryModalProps) 
                   type="button"
                   variant="ghost"
                   onClick={() => adjustHours(-1)}
-                  disabled={hours <= 1}
+                  disabled={hours <= HOURS_MIN}
                   aria-label="Decrease hours"
                   className="h-auto rounded-none px-3"
                 >
@@ -238,18 +244,20 @@ export function EntryModal({ date, entry, onClose, onSubmit }: EntryModalProps) 
                 <input
                   id="hours"
                   type="number"
-                  min={1}
-                  max={24}
+                  min={HOURS_MIN}
+                  max={HOURS_MAX}
+                  step={HOURS_STEP}
+                  inputMode="decimal"
                   aria-invalid={errors.hours ? "true" : "false"}
                   aria-describedby={errors.hours ? "hours-error" : undefined}
-                  className="w-14 border-x border-gray-300 text-center text-sm text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-indigo-500"
+                  className="w-16 border-x border-gray-300 text-center text-sm text-gray-900 focus:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-indigo-500"
                   {...register("hours", { valueAsNumber: true })}
                 />
                 <Button
                   type="button"
                   variant="ghost"
                   onClick={() => adjustHours(1)}
-                  disabled={hours >= 24}
+                  disabled={hours >= HOURS_MAX}
                   aria-label="Increase hours"
                   className="h-auto rounded-none px-3"
                 >

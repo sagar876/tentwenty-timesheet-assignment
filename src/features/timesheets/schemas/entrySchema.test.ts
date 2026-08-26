@@ -24,8 +24,13 @@ describe("entrySchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects hours below the minimum", () => {
+  it("rejects zero hours", () => {
     const result = entrySchema.safeParse({ ...validInput, hours: 0 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects negative hours", () => {
+    const result = entrySchema.safeParse({ ...validInput, hours: -1 });
     expect(result.success).toBe(false);
   });
 
@@ -34,8 +39,26 @@ describe("entrySchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it("rejects non-integer hours", () => {
-    const result = entrySchema.safeParse({ ...validInput, hours: 4.5 });
+  it("rejects non-numeric hours", () => {
+    const result = entrySchema.safeParse({ ...validInput, hours: Number.NaN });
     expect(result.success).toBe(false);
+  });
+
+  it.each([0.5, 1.5, 2.25, 7.5, 8.5])("accepts %s decimal hours without truncating", (hours) => {
+    const result = entrySchema.safeParse({ ...validInput, hours });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.hours).toBe(hours);
+    }
+  });
+
+  it("rejects hours that aren't in quarter-hour increments", () => {
+    const result = entrySchema.safeParse({ ...validInput, hours: 1.3 });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts whole-number hours", () => {
+    const result = entrySchema.safeParse({ ...validInput, hours: 8 });
+    expect(result.success).toBe(true);
   });
 });

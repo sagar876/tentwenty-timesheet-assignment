@@ -1,20 +1,66 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useFetch } from "@/lib/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { buildSearchParamsUrl } from "@/lib/urlSearchParams";
 import { getWeeklyTimesheets } from "@/features/timesheets/services/timesheetsApi";
 import { TimesheetFilters, DATE_RANGE_OPTIONS } from "@/features/timesheets/components/dashboard/TimesheetFilters";
 import { TimesheetTable } from "@/features/timesheets/components/dashboard/TimesheetTable";
+import { TimesheetTableSkeleton } from "@/features/timesheets/components/dashboard/TimesheetTableSkeleton";
 import { Pagination } from "@/features/timesheets/components/dashboard/Pagination";
 import type { SortDirection, TimesheetStatus, WeekSortField } from "@/features/timesheets/types/timesheet";
 
+const VALID_SORT_FIELDS: WeekSortField[] = ["weekNumber", "startDate", "status"];
+const DEFAULT_SORT_FIELD: WeekSortField = "weekNumber";
+const DEFAULT_SORT_DIR: SortDirection = "asc";
+const VALID_STATUSES: TimesheetStatus[] = ["completed", "incomplete", "missing"];
+
+function parsePage(value: string | null): number {
+  const parsed = value === null ? NaN : Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) return 1;
+  return parsed;
+}
+
+function parseSortBy(value: string | null): WeekSortField {
+  return (VALID_SORT_FIELDS as string[]).includes(value ?? "")
+    ? (value as WeekSortField)
+    : DEFAULT_SORT_FIELD;
+}
+
+function parseSortDir(value: string | null): SortDirection {
+  return value === "desc" ? "desc" : DEFAULT_SORT_DIR;
+}
+
+function parseStatus(value: string | null): TimesheetStatus | "" {
+  return value !== null && (VALID_STATUSES as string[]).includes(value) ? (value as TimesheetStatus) : "";
+}
+
+// The URL uses each date range's own "from" month (e.g. "2024-01") rather than
+// its array index, so the value is stable/meaningful instead of arbitrary.
+function dateRangeIndexToParam(index: number): string | null {
+  const from = DATE_RANGE_OPTIONS[index]?.from;
+  return from ? from.slice(0, 7) : null;
+}
+
+function parseDateRangeIndex(value: string | null): number {
+  if (!value) return 0;
+  const index = DATE_RANGE_OPTIONS.findIndex((option) => option.from?.slice(0, 7) === value);
+  return index === -1 ? 0 : index;
+}
+
 export function TimesheetDashboard() {
-  const [status, setStatus] = useState<TimesheetStatus | "">("");
-  const [dateRangeIndex, setDateRangeIndex] = useState(0);
-  const [sortBy, setSortBy] = useState<WeekSortField>("weekNumber");
-  const [sortDir, setSortDir] = useState<SortDirection>("asc");
-  const [page, setPage] = useState(1);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const page = parsePage(searchParams.get("page"));
+  const sortBy = parseSortBy(searchParams.get("sort"));
+  const sortDir = parseSortDir(searchParams.get("order"));
+  const status = parseStatus(searchParams.get("status"));
+  const dateRangeIndex = parseDateRangeIndex(searchParams.get("dateRange"));
+
   const [pageSize, setPageSize] = useState(5);
 
   const dateRange = DATE_RANGE_OPTIONS[dateRangeIndex]!;
@@ -33,28 +79,34 @@ export function TimesheetDashboard() {
     [status, dateRange.from, dateRange.to, sortBy, sortDir, page, pageSize],
   );
 
+  function navigate(updates: Record<string, string | null>, mode: "push" | "replace") {
+    router[mode](buildSearchParamsUrl(pathname, searchParams, updates), { scroll: false });
+  }
+
   function handleSortChange(field: WeekSortField) {
     if (field === sortBy) {
-      setSortDir((current) => (current === "asc" ? "desc" : "asc"));
+      navigate({ order: sortDir === "asc" ? "desc" : "asc" }, "replace");
     } else {
-      setSortBy(field);
-      setSortDir("asc");
+      navigate({ sort: field, order: "asc" }, "replace");
     }
   }
 
+  function handlePageChange(next: number) {
+    const safePage = Math.max(1, next);
+    navigate({ page: safePage === 1 ? null : String(safePage) }, "push");
+  }
+
   function handleStatusChange(next: TimesheetStatus | "") {
-    setStatus(next);
-    setPage(1);
+    navigate({ status: next || null, page: null }, "push");
   }
 
   function handleDateRangeChange(index: number) {
-    setDateRangeIndex(index);
-    setPage(1);
+    navigate({ dateRange: dateRangeIndexToParam(index), page: null }, "push");
   }
 
   function handlePageSizeChange(next: number) {
     setPageSize(next);
-    setPage(1);
+    navigate({ page: null }, "replace");
   }
 
   return (
@@ -77,9 +129,7 @@ export function TimesheetDashboard() {
       </div>
 
       <div aria-live="polite" aria-busy={loading}>
-        {loading && (
-          <p className="px-6 py-12 text-center text-sm text-gray-500">Loading timesheets…</p>
-        )}
+        {loading && <TimesheetTableSkeleton rows={pageSize} />}
 
         {!loading && error && (
           <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
@@ -108,7 +158,7 @@ export function TimesheetDashboard() {
               page={data.page}
               pageSize={data.pageSize}
               total={data.total}
-              onPageChange={setPage}
+              onPageChange={handlePageChange}
               onPageSizeChange={handlePageSizeChange}
             />
           </>

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { useFetch } from "@/lib/hooks/useFetch";
+import { useFetch } from "@/hooks/useFetch";
+import { buildSearchParamsUrl } from "@/lib/urlSearchParams";
 import {
   getTimesheetEntries,
   createTimesheet,
@@ -23,9 +25,48 @@ interface WeekDetailViewProps {
 type ModalState = { mode: "create"; date: string } | { mode: "edit"; entry: TimesheetEntry } | null;
 
 export function WeekDetailView({ weekId }: WeekDetailViewProps) {
-  const [modalState, setModalState] = useState<ModalState>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Only needed to preserve which day's "Add new task" button was clicked; the
+  // URL (?modal=add) doesn't carry the day, so a cold refresh/deep-link falls
+  // back to the week's start date instead - see modalState below.
+  const [pendingAddDate, setPendingAddDate] = useState<string | null>(null);
 
   const { data, loading, error, refetch } = useFetch(() => getTimesheetEntries(weekId), [weekId]);
+
+  const modalParam = searchParams.get("modal");
+  const entryIdParam = searchParams.get("entryId");
+
+  let modalState: ModalState = null;
+  if (data) {
+    if (modalParam === "add") {
+      modalState = { mode: "create", date: pendingAddDate ?? data.week.startDate };
+    } else if (modalParam === "edit" && entryIdParam) {
+      const entry = data.entries.find((item) => item.id === entryIdParam);
+      if (entry) modalState = { mode: "edit", entry };
+    }
+  }
+
+  function closeModal() {
+    router.replace(buildSearchParamsUrl(pathname, searchParams, { modal: null, entryId: null }), {
+      scroll: false,
+    });
+  }
+
+  function openAddModal(date: string) {
+    setPendingAddDate(date);
+    router.push(buildSearchParamsUrl(pathname, searchParams, { modal: "add", entryId: null }), {
+      scroll: false,
+    });
+  }
+
+  function openEditModal(entry: TimesheetEntry) {
+    router.push(buildSearchParamsUrl(pathname, searchParams, { modal: "edit", entryId: entry.id }), {
+      scroll: false,
+    });
+  }
 
   async function handleModalSubmit(values: EntryInput) {
     if (modalState?.mode === "edit") {
@@ -33,7 +74,7 @@ export function WeekDetailView({ weekId }: WeekDetailViewProps) {
     } else {
       await createTimesheet(weekId, values);
     }
-    setModalState(null);
+    closeModal();
     refetch();
   }
 
@@ -66,8 +107,8 @@ export function WeekDetailView({ weekId }: WeekDetailViewProps) {
                 key={date}
                 date={date}
                 entries={data.entries.filter((entry) => entry.date === date)}
-                onAddEntry={() => setModalState({ mode: "create", date })}
-                onEditEntry={(entry) => setModalState({ mode: "edit", entry })}
+                onAddEntry={() => openAddModal(date)}
+                onEditEntry={openEditModal}
                 onDeleteEntry={handleEntryDelete}
               />
             ))}
@@ -79,7 +120,7 @@ export function WeekDetailView({ weekId }: WeekDetailViewProps) {
         <EntryModal
           date={modalState.mode === "edit" ? modalState.entry.date : modalState.date}
           entry={modalState.mode === "edit" ? modalState.entry : undefined}
-          onClose={() => setModalState(null)}
+          onClose={closeModal}
           onSubmit={handleModalSubmit}
         />
       )}

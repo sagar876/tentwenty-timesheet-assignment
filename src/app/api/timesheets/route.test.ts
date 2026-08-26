@@ -33,7 +33,7 @@ describe("GET /api/timesheets", () => {
 
     expect(response.status).toBe(200);
     expect(body.items).toHaveLength(5);
-    expect(body.total).toBe(10);
+    expect(body.total).toBe(50);
     expect(body.page).toBe(1);
     expect(body.pageSize).toBe(5);
   });
@@ -45,7 +45,7 @@ describe("GET /api/timesheets", () => {
     const body = await response.json();
 
     expect(response.status).toBe(200);
-    expect(body.total).toBe(2);
+    expect(body.total).toBe(6);
     expect(
       body.items.every((week: { status: string }) => week.status === "missing"),
     ).toBe(true);
@@ -81,7 +81,7 @@ describe("GET /api/timesheets", () => {
     const body = await response.json();
 
     expect(body.items.map((week: { weekNumber: number }) => week.weekNumber)).toEqual([
-      10, 9, 8, 7, 6,
+      50, 49, 48, 47, 46,
     ]);
   });
 

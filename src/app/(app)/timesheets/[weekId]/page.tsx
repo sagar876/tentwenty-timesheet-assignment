@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { WeekDetailView } from "@/features/timesheets/components/detail/WeekDetailView";
@@ -15,7 +16,9 @@ export default async function WeekDetailPage(props: PageProps<"/timesheets/[week
         <ArrowLeft aria-hidden="true" className="h-4 w-4" />
         Back
       </Link>
-      <WeekDetailView weekId={weekId} />
+      <Suspense fallback={null}>
+        <WeekDetailView weekId={weekId} />
+      </Suspense>
     </main>
   );
 }

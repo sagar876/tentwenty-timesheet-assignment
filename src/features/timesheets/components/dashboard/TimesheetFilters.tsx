@@ -15,14 +15,14 @@ interface DateRangeOption {
 }
 
 export const DATE_RANGE_OPTIONS: DateRangeOption[] = [
-  { label: "All dates" },
+  { label: "Date Range" },
   { label: "January 2024", from: "2024-01-01", to: "2024-01-31" },
   { label: "February 2024", from: "2024-02-01", to: "2024-02-29" },
   { label: "March 2024", from: "2024-03-01", to: "2024-03-31" },
 ];
 
 const STATUS_OPTIONS: { label: string; value: TimesheetStatus | "all" }[] = [
-  { label: "All statuses", value: "all" },
+  { label: "Status", value: "all" },
   { label: "Completed", value: "completed" },
   { label: "Incomplete", value: "incomplete" },
   { label: "Missing", value: "missing" },

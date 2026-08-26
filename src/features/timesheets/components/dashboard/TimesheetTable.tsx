@@ -99,7 +99,7 @@ export function TimesheetTable({ weeks, sortBy, sortDir, onSortChange }: Timeshe
       <TableBody className="divide-y divide-gray-200">
         {weeks.map((week) => (
           <TableRow key={week.id} className="hover:bg-transparent">
-            <TableCell className="px-6 py-4 text-gray-900">{week.weekNumber}</TableCell>
+            <TableCell className="bg-gray-50 px-6 py-4 text-gray-900">{week.weekNumber}</TableCell>
             <TableCell className="px-6 py-4 text-gray-600">
               {formatDateRange(week.startDate, week.endDate)}
             </TableCell>
