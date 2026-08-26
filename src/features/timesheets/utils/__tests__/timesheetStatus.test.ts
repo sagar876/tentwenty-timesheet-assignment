@@ -1,4 +1,4 @@
-import { computeStatus, WEEK_TARGET_HOURS } from "./timesheetStatus";
+import { computeStatus, WEEK_TARGET_HOURS } from "../timesheetStatus";
 
 describe("computeStatus", () => {
   it("returns missing when no hours are logged", () => {

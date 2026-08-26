@@ -4,7 +4,7 @@ import {
   deleteEntry,
   getWeekDetail,
   type EntryMutationResult,
-} from "./timesheetService";
+} from "../timesheetService";
 
 function requireEntry(result: EntryMutationResult) {
   if (!result.ok) throw new Error(`Expected a successful mutation, got: ${result.reason}`);

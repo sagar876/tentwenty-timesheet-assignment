@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { WeekDetailView } from "./WeekDetailView";
+import { WeekDetailView } from "../WeekDetailView";
 import {
   getTimesheetEntries,
   createTimesheet,

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { Pagination } from "./Pagination";
+import { Pagination } from "../Pagination";
 
 describe("Pagination", () => {
   it("disables Previous on the first page and Next on the last page", () => {

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { EntryModal } from "./EntryModal";
+import { EntryModal } from "../EntryModal";
 import { getProjects } from "@/features/timesheets/services/projectsApi";
 import type { TimesheetEntry } from "@/features/timesheets/types/timesheet";
 

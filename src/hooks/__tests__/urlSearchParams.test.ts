@@ -1,4 +1,4 @@
-import { buildSearchParamsUrl } from "../hooks/urlSearchParams";
+import { buildSearchParamsUrl } from "../urlSearchParams";
 
 describe("buildSearchParamsUrl", () => {
   it("returns the bare pathname when there are no params", () => {

@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TimesheetTable } from "./TimesheetTable";
+import { TimesheetTable } from "../TimesheetTable";
 import type { WeekSortField, WeekSummary } from "@/features/timesheets/types/timesheet";
 
 const weeks: WeekSummary[] = [

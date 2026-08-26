@@ -1,4 +1,4 @@
-import { formatDateRange, formatDayLabel, getDatesInRange } from "./format";
+import { formatDateRange, formatDayLabel, getDatesInRange } from "../format";
 
 describe("formatDateRange", () => {
   it("formats a range within the same month", () => {

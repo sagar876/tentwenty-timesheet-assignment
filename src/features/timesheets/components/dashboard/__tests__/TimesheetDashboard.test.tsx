@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from "@testing-library/react";
-import { TimesheetDashboard } from "./TimesheetDashboard";
+import { TimesheetDashboard } from "../TimesheetDashboard";
 import { getWeeklyTimesheets } from "@/features/timesheets/services/timesheetsApi";
 
 const pushMock = jest.fn();
