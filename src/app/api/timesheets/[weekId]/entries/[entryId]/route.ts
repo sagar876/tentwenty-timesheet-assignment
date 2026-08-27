@@ -25,6 +25,9 @@ export async function PATCH(request: NextRequest, ctx: Ctx) {
 
     const result = updateEntry(weekId, entryId, parsed.data);
     if (!result.ok) {
+      if (result.reason === "exceeds_weekly_limit") {
+        return NextResponse.json({ error: "Weekly hours cannot exceed 40 hours." }, { status: 400 });
+      }
       const message =
         result.reason === "week_not_found"
           ? `Week not found: ${weekId}`

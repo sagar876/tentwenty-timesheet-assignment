@@ -126,17 +126,15 @@ directly (see the next section for why).
 
 ### `hooks`
 
-Currently holds `useFetch` (the small data-fetching hook used by both
-the dashboard and the week-detail view) and `urlSearchParams.ts` (a
-plain helper for building/updating URL search params — not a React
-hook, but currently kept alongside `useFetch` here).
+Currently holds just `useFetch`, the small data-fetching hook used by
+both the dashboard and the week-detail view.
 
 ### `lib`
 
 Small non-React pieces of code shared across the whole app: a helper
-for reading API responses, a helper used by shadcn components for
-combining CSS classes, and the localStorage helper behind "remember my
-email" on login.
+for reading API responses, a helper for building/updating URL search
+params, a helper used by shadcn components for combining CSS classes,
+and the localStorage helper behind "remember my email" on login.
 
 ## 5. How the API works
 
@@ -222,8 +220,9 @@ npm run build      # production build
 npm run start       # run the production build
 npm run lint         # check code style
 npm run typecheck  # check TypeScript types
-npm run test         # run all tests once
-npm run test:watch  # run tests in watch mode
+npm run test         # run all unit/component tests once
+npm run test:watch  # run unit/component tests in watch mode
+npm run test:e2e     # run the Playwright end-to-end tests (starts the dev server automatically)
 ```
 
 ## 7. Assumptions
@@ -242,20 +241,33 @@ rather than building a full production system:
   enough real data to page through.)
 - **There are two test users**, both hardcoded — no sign-up flow,
   password reset, or real account management.
+- **A timesheet week cannot exceed 40 hours.** This is enforced in
+  `timesheetService.ts` (not just the UI), so it can't be bypassed by
+  calling the API directly. Editing an entry correctly excludes its own
+  old hours before checking the new total against the limit.
 - **"Type of work" is a fixed list** (Bug fixes, Feature development,
-  Code review, Testing, Documentation, Meeting) rather than something a
-  user can manage themselves.
+  Code review, Testing, Documentation, Meeting), picked from a
+  dropdown rather than typed freely. In a real backend this list would
+  come from an API rather than being hardcoded client-side, but the
+  dropdown UI is intentional either way.
 
 ### Known limitations
 
 - No real database — see above.
-- No end-to-end/browser tests. Testing is at the unit and component
-  level only (Jest + React Testing Library) — currently 135 tests
-  across 19 test files, covering form validation, loading/error/empty
-  states, URL state (pagination/sorting/filtering/deep-linking), and
-  the API routes themselves. Tests sit beside the file they cover; a
-  local `__tests__/` folder is used where a directory has several
+- Most testing is at the unit and component level (Jest + React
+  Testing Library) — 162 tests across 21 test files, covering form
+  validation, loading/error/empty states, URL state
+  (pagination/sorting/filtering/deep-linking), the 40-hour weekly cap,
+  and the API routes themselves. Tests sit beside the file they cover;
+  a local `__tests__/` folder is used where a directory has several
   related test files (e.g. `features/timesheets/utils/__tests__/`).
+- A small Playwright end-to-end suite (`tests/e2e/`) covers the
+  critical real-browser flow that unit tests can't: login → dashboard
+  → open a week → add/edit/delete an entry → totals and status
+  updating → the 40-hour rule rejecting an over-limit entry → the
+  Remember Me session cookie's actual expiry when checked. It's
+  intentionally small — it doesn't duplicate the detailed validation
+  already covered by the Jest suite.
 
 
 ## Future Improvements for state management

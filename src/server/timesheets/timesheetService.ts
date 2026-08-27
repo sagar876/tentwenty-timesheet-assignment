@@ -1,4 +1,4 @@
-import { computeStatus } from "@/features/timesheets/utils/timesheetStatus";
+import { computeStatus, WEEK_TARGET_HOURS } from "@/features/timesheets/utils/timesheetStatus";
 import { sumHours } from "@/features/timesheets/utils/hours";
 import { filterTimesheetsByDateRange } from "@/features/timesheets/utils/dateRange";
 import type { EntryInput } from "@/features/timesheets/schemas/entrySchema";
@@ -96,10 +96,20 @@ export function getWeekDetail(weekId: string): WeekDetail | undefined {
   return { week: toSummary(week), entries: getEntriesForWeek(weekId) };
 }
 
-type EntryMutationFailure =
-  | { ok: false; reason: "week_not_found" | "entry_not_found" | "project_not_found" };
+type EntryMutationFailure = {
+  ok: false;
+  reason: "week_not_found" | "entry_not_found" | "project_not_found" | "exceeds_weekly_limit";
+};
 type EntryMutationSuccess = { ok: true; entry: TimesheetEntry };
 export type EntryMutationResult = EntryMutationSuccess | EntryMutationFailure;
+
+function wouldExceedWeeklyLimit(weekId: string, entryIdToReplace: string | undefined, newHours: number): boolean {
+  const otherEntryHours = getEntriesForWeek(weekId)
+    .filter((entry) => entry.id !== entryIdToReplace)
+    .map((entry) => entry.hours);
+
+  return sumHours([...otherEntryHours, newHours]) > WEEK_TARGET_HOURS;
+}
 
 export function createEntry(weekId: string, input: EntryInput): EntryMutationResult {
   if (!findWeekById(weekId)) {
@@ -109,6 +119,10 @@ export function createEntry(weekId: string, input: EntryInput): EntryMutationRes
   const project = findProjectById(input.projectId);
   if (!project) {
     return { ok: false, reason: "project_not_found" };
+  }
+
+  if (wouldExceedWeeklyLimit(weekId, undefined, input.hours)) {
+    return { ok: false, reason: "exceeds_weekly_limit" };
   }
 
   const entry = addEntry({
@@ -137,6 +151,10 @@ export function updateEntry(weekId: string, entryId: string, input: EntryInput):
   const project = findProjectById(input.projectId);
   if (!project) {
     return { ok: false, reason: "project_not_found" };
+  }
+
+  if (wouldExceedWeeklyLimit(weekId, entryId, input.hours)) {
+    return { ok: false, reason: "exceeds_weekly_limit" };
   }
 
   const entry = updateEntryRecord(entryId, {

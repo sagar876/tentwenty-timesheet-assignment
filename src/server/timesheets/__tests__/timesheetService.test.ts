@@ -94,6 +94,84 @@ describe("weekly total hours with decimal entries", () => {
   });
 });
 
+describe("weekly 40-hour cap", () => {
+  it("allows reaching exactly 40 hours but rejects going over on create", () => {
+    requireEntry(
+      createEntry("week-30", {
+        date: "2024-07-22",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "Most of the week",
+        hours: 39.75,
+      }),
+    );
+    expect(getWeekDetail("week-30")!.week.totalHours).toBe(39.75);
+
+    requireEntry(
+      createEntry("week-30", {
+        date: "2024-07-23",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "Top up to the limit",
+        hours: 0.25,
+      }),
+    );
+    expect(getWeekDetail("week-30")!.week.totalHours).toBe(40);
+
+    const rejected = createEntry("week-30", {
+      date: "2024-07-24",
+      projectId: "project-1",
+      typeOfWork: "Testing",
+      description: "Over the limit",
+      hours: 0.25,
+    });
+    expect(rejected).toEqual({ ok: false, reason: "exceeds_weekly_limit" });
+    expect(getWeekDetail("week-30")!.week.totalHours).toBe(40);
+  });
+
+  it("excludes the entry's old hours before checking the new total on edit", () => {
+    requireEntry(
+      createEntry("week-40", {
+        date: "2024-09-30",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "Bulk of the week",
+        hours: 37,
+      }),
+    );
+    const second = requireEntry(
+      createEntry("week-40", {
+        date: "2024-10-01",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "Small task",
+        hours: 2,
+      }),
+    );
+    expect(getWeekDetail("week-40")!.week.totalHours).toBe(39);
+
+    const updated = updateEntry("week-40", second.id, {
+      date: "2024-10-01",
+      projectId: "project-1",
+      typeOfWork: "Testing",
+      description: "Small task",
+      hours: 3,
+    });
+    expect(updated.ok).toBe(true);
+    expect(getWeekDetail("week-40")!.week.totalHours).toBe(40);
+
+    const rejected = updateEntry("week-40", second.id, {
+      date: "2024-10-01",
+      projectId: "project-1",
+      typeOfWork: "Testing",
+      description: "Small task",
+      hours: 5,
+    });
+    expect(rejected).toEqual({ ok: false, reason: "exceeds_weekly_limit" });
+    expect(getWeekDetail("week-40")!.week.totalHours).toBe(40);
+  });
+});
+
 describe("getWeekSummaries date range filtering", () => {
   it("returns every week when no date range is given", () => {
     const all = getWeekSummaries();
