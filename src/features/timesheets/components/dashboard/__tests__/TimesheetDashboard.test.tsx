@@ -16,6 +16,30 @@ jest.mock("@/features/timesheets/services/timesheetsApi", () => ({
   getWeeklyTimesheets: jest.fn(),
 }));
 
+// The real Calendar renders a full react-day-picker grid; its internal
+// range-selection merging isn't our code, so tests stub it down to buttons
+// that call onSelect with a fixed DateRange, and only assert on how
+// DateRangeFilter/TimesheetDashboard react to that.
+jest.mock("@/components/ui/calendar", () => ({
+  Calendar: ({
+    onSelect,
+  }: {
+    onSelect: (range: { from?: Date; to?: Date } | undefined) => void;
+  }) => (
+    <div>
+      <button type="button" onClick={() => onSelect({ from: new Date(2024, 1, 1), to: new Date(2024, 1, 1) })}>
+        Pick Feb 1
+      </button>
+      <button
+        type="button"
+        onClick={() => onSelect({ from: new Date(2024, 1, 1), to: new Date(2024, 1, 29) })}
+      >
+        Pick Feb 1 to Feb 29
+      </button>
+    </div>
+  ),
+}));
+
 const mockedGetWeeklyTimesheets = getWeeklyTimesheets as jest.MockedFunction<
   typeof getWeeklyTimesheets
 >;
@@ -198,12 +222,8 @@ describe("TimesheetDashboard", () => {
       fireEvent.click(await screen.findByRole("option", { name: label }));
     }
 
-    function changeStartDate(value: string) {
-      fireEvent.change(screen.getByLabelText(/start date/i), { target: { value } });
-    }
-
-    function changeEndDate(value: string) {
-      fireEvent.change(screen.getByLabelText(/end date/i), { target: { value } });
+    function openDateRangePopover() {
+      fireEvent.click(screen.getByRole("button", { name: /date range/i }));
     }
 
     it("defaults to no status or date-range filter when absent", async () => {
@@ -267,28 +287,66 @@ describe("TimesheetDashboard", () => {
       expect(pushMock).toHaveBeenCalledWith("/dashboard?status=completed", { scroll: false });
     });
 
-    it("pushes the start date and resets to page 1 when it changes", async () => {
+    it("pushes a single picked day as both start and end and resets to page 1", async () => {
       mockSearchParams = new URLSearchParams("page=3");
       mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
       render(<TimesheetDashboard />);
       await screen.findByRole("table");
 
-      changeStartDate("2024-02-01");
+      openDateRangePopover();
+      fireEvent.click(screen.getByRole("button", { name: /pick feb 1$/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^apply$/i }));
 
-      expect(pushMock).toHaveBeenCalledWith("/dashboard?from=2024-02-01", { scroll: false });
+      expect(pushMock).toHaveBeenCalledWith("/dashboard?from=2024-02-01&to=2024-02-01", {
+        scroll: false,
+      });
     });
 
-    it("pushes the end date alongside the current start date and resets to page 1", async () => {
-      mockSearchParams = new URLSearchParams("from=2024-02-01&page=3");
+    it("pushes both dates when a full range is picked and resets to page 1", async () => {
+      mockSearchParams = new URLSearchParams("page=3");
       mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
       render(<TimesheetDashboard />);
       await screen.findByRole("table");
 
-      changeEndDate("2024-02-29");
+      openDateRangePopover();
+      fireEvent.click(screen.getByRole("button", { name: /pick feb 1 to feb 29/i }));
+      fireEvent.click(screen.getByRole("button", { name: /^apply$/i }));
 
       expect(pushMock).toHaveBeenCalledWith("/dashboard?from=2024-02-01&to=2024-02-29", {
         scroll: false,
       });
+    });
+
+    it("does not push when the popover is closed without clicking Apply", async () => {
+      mockSearchParams = new URLSearchParams("page=3");
+      mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
+      render(<TimesheetDashboard />);
+      await screen.findByRole("table");
+
+      openDateRangePopover();
+      fireEvent.click(screen.getByRole("button", { name: /pick feb 1$/i }));
+      fireEvent.keyDown(screen.getByRole("button", { name: /^apply$/i }), { key: "Escape" });
+
+      expect(pushMock).not.toHaveBeenCalled();
+    });
+
+    it("clears both dates and resets to page 1 when the Clear dates button is clicked", async () => {
+      mockSearchParams = new URLSearchParams("from=2024-02-01&to=2024-02-29&page=2");
+      mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
+      render(<TimesheetDashboard />);
+      await screen.findByRole("table");
+
+      fireEvent.click(screen.getByRole("button", { name: /clear dates/i }));
+
+      expect(pushMock).toHaveBeenCalledWith("/dashboard", { scroll: false });
+    });
+
+    it("does not show the Clear dates button when no date range is selected", async () => {
+      mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
+      render(<TimesheetDashboard />);
+      await screen.findByRole("table");
+
+      expect(screen.queryByRole("button", { name: /clear dates/i })).not.toBeInTheDocument();
     });
 
     it("omits the status param when the default 'Status' option is selected", async () => {

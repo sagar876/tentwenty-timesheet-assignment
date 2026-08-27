@@ -1,3 +1,5 @@
+import { XIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -6,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DateRangeFilter } from "@/features/timesheets/components/dashboard/DateRangeFilter";
 import type { TimesheetStatus } from "@/features/timesheets/types/timesheet";
 
 const STATUS_OPTIONS: { label: string; value: TimesheetStatus | "all" }[] = [
@@ -17,8 +20,6 @@ const STATUS_OPTIONS: { label: string; value: TimesheetStatus | "all" }[] = [
 
 const SELECT_TRIGGER_CLASSES =
   "h-auto rounded-md border-gray-300 px-3 py-2 text-sm text-gray-700";
-const DATE_INPUT_CLASSES =
-  "h-auto rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700";
 
 interface TimesheetFiltersProps {
   from: string;
@@ -37,33 +38,19 @@ export function TimesheetFilters({
 }: TimesheetFiltersProps) {
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <div>
-        <Label htmlFor="date-from-filter" className="sr-only">
-          Start date
-        </Label>
-        <input
-          id="date-from-filter"
-          type="date"
-          value={from}
-          max={to || undefined}
-          onChange={(event) => onDateRangeChange(event.target.value, to)}
-          className={DATE_INPUT_CLASSES}
-        />
-      </div>
+      <DateRangeFilter from={from} to={to} onDateRangeChange={onDateRangeChange} />
 
-      <div>
-        <Label htmlFor="date-to-filter" className="sr-only">
-          End date
-        </Label>
-        <input
-          id="date-to-filter"
-          type="date"
-          value={to}
-          min={from || undefined}
-          onChange={(event) => onDateRangeChange(from, event.target.value)}
-          className={DATE_INPUT_CLASSES}
-        />
-      </div>
+      {(from || to) && (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => onDateRangeChange("", "")}
+          className="h-auto w-fit gap-1 self-start px-2 py-2 text-sm text-gray-500 hover:text-gray-700 sm:self-center"
+        >
+          <XIcon aria-hidden="true" className="h-4 w-4" />
+          Clear dates
+        </Button>
+      )}
 
       <div>
         <Label htmlFor="status-filter" className="sr-only">

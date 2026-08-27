@@ -71,8 +71,9 @@ export function getWeekSummaries(filters: WeekSummaryFilters = {}): WeekSummaryP
 
   summaries = sortSummaries(summaries, filters.sortBy ?? "weekNumber", filters.sortDir ?? "asc");
 
-  const page = filters.page ?? 1;
   const pageSize = filters.pageSize ?? 5;
+  const totalPages = Math.max(1, Math.ceil(summaries.length / pageSize));
+  const page = Math.min(filters.page ?? 1, totalPages);
   const start = (page - 1) * pageSize;
 
   return {

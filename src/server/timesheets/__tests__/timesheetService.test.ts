@@ -3,6 +3,7 @@ import {
   updateEntry,
   deleteEntry,
   getWeekDetail,
+  getWeekSummaries,
   type EntryMutationResult,
 } from "../timesheetService";
 
@@ -90,5 +91,32 @@ describe("weekly total hours with decimal entries", () => {
     );
 
     expect(getWeekDetail("week-20")!.week.totalHours).toBe(8.15);
+  });
+});
+
+describe("getWeekSummaries date range filtering", () => {
+  it("returns every week when no date range is given", () => {
+    const all = getWeekSummaries();
+    const filtered = getWeekSummaries({ from: undefined, to: undefined });
+    expect(filtered.total).toBe(all.total);
+  });
+
+  it("filters to only the weeks overlapping the selected range", () => {
+    const result = getWeekSummaries({ from: "2024-01-01", to: "2024-01-19", pageSize: 50 });
+    expect(result.items.map((week) => week.id)).toEqual(["week-1", "week-2", "week-3"]);
+    expect(result.total).toBe(3);
+  });
+
+  it("clamps to the last valid page when the requested page exceeds the filtered total", () => {
+    const result = getWeekSummaries({
+      from: "2024-01-01",
+      to: "2024-01-05",
+      page: 5,
+      pageSize: 5,
+    });
+
+    expect(result.total).toBe(1);
+    expect(result.page).toBe(1);
+    expect(result.items).toHaveLength(1);
   });
 });

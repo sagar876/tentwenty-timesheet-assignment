@@ -44,6 +44,11 @@ describe("filterTimesheetsByDateRange", () => {
     expect(result.map((w) => w.id)).toEqual(["week-1", "week-2"]);
   });
 
+  it("matches a week when the start date equals the end date", () => {
+    const result = filterTimesheetsByDateRange(weeks, { from: "2024-01-10", to: "2024-01-10" });
+    expect(result.map((w) => w.id)).toEqual(["week-2"]);
+  });
+
   it("returns no weeks for an inverted (to before from) range", () => {
     const result = filterTimesheetsByDateRange(weeks, { from: "2024-01-19", to: "2024-01-01" });
     expect(result).toEqual([]);
