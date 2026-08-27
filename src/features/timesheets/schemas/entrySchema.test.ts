@@ -44,16 +44,19 @@ describe("entrySchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it.each([0.5, 1.5, 2.25, 7.5, 8.5])("accepts %s decimal hours without truncating", (hours) => {
-    const result = entrySchema.safeParse({ ...validInput, hours });
-    expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.hours).toBe(hours);
-    }
-  });
+  it.each([0.5, 1.1, 1.25, 1.5, 2.3, 4.75, 7.5, 8.5])(
+    "accepts %s decimal hours without truncating",
+    (hours) => {
+      const result = entrySchema.safeParse({ ...validInput, hours });
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.hours).toBe(hours);
+      }
+    },
+  );
 
-  it("rejects hours that aren't in quarter-hour increments", () => {
-    const result = entrySchema.safeParse({ ...validInput, hours: 1.3 });
+  it("rejects hours with more than 2 decimal places", () => {
+    const result = entrySchema.safeParse({ ...validInput, hours: 1.123 });
     expect(result.success).toBe(false);
   });
 

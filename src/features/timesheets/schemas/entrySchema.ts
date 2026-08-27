@@ -1,8 +1,7 @@
 import { z } from "zod";
 import { TYPE_OF_WORK_OPTIONS } from "@/features/timesheets/types/timesheet";
 
-export const HOURS_STEP = 0.25;
-export const HOURS_MIN = HOURS_STEP;
+export const HOURS_MIN = 0.01;
 export const HOURS_MAX = 24;
 
 export const entrySchema = z.object({
@@ -16,8 +15,8 @@ export const entrySchema = z.object({
     .number({ error: "Hours is required" })
     .positive("Hours must be greater than 0")
     .max(HOURS_MAX, "Hours can't exceed 24 for a single entry")
-    .refine((value) => Math.round(value / HOURS_STEP) * HOURS_STEP === value, {
-      message: "Hours must be in increments of 0.25",
+    .refine((value) => Number(value.toFixed(2)) === value, {
+      message: "Hours can have at most 2 decimal places",
     }),
 });
 

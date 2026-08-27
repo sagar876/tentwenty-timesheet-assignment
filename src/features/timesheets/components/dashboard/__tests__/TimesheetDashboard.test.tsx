@@ -198,9 +198,12 @@ describe("TimesheetDashboard", () => {
       fireEvent.click(await screen.findByRole("option", { name: label }));
     }
 
-    async function selectDateRange(label: string) {
-      fireEvent.click(screen.getByRole("combobox", { name: /date range/i }));
-      fireEvent.click(await screen.findByRole("option", { name: label }));
+    function changeStartDate(value: string) {
+      fireEvent.change(screen.getByLabelText(/start date/i), { target: { value } });
+    }
+
+    function changeEndDate(value: string) {
+      fireEvent.change(screen.getByLabelText(/end date/i), { target: { value } });
     }
 
     it("defaults to no status or date-range filter when absent", async () => {
@@ -232,7 +235,7 @@ describe("TimesheetDashboard", () => {
     });
 
     it("reads a valid date range from the URL", async () => {
-      mockSearchParams = new URLSearchParams("dateRange=2024-02");
+      mockSearchParams = new URLSearchParams("from=2024-02-01&to=2024-02-29");
       mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
       render(<TimesheetDashboard />);
 
@@ -242,14 +245,14 @@ describe("TimesheetDashboard", () => {
       );
     });
 
-    it("falls back to the default (all dates) for an invalid date-range value", async () => {
-      mockSearchParams = new URLSearchParams("dateRange=2099-12");
+    it("falls back to no date filter for a malformed date value", async () => {
+      mockSearchParams = new URLSearchParams("from=not-a-date&to=2024-02-29");
       mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
       render(<TimesheetDashboard />);
 
       await screen.findByRole("table");
       expect(mockedGetWeeklyTimesheets).toHaveBeenCalledWith(
-        expect.objectContaining({ from: undefined, to: undefined }),
+        expect.objectContaining({ from: undefined, to: "2024-02-29" }),
       );
     });
 
@@ -264,15 +267,28 @@ describe("TimesheetDashboard", () => {
       expect(pushMock).toHaveBeenCalledWith("/dashboard?status=completed", { scroll: false });
     });
 
-    it("pushes the date range and resets to page 1 when selecting a date range", async () => {
+    it("pushes the start date and resets to page 1 when it changes", async () => {
       mockSearchParams = new URLSearchParams("page=3");
       mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
       render(<TimesheetDashboard />);
       await screen.findByRole("table");
 
-      await selectDateRange("February 2024");
+      changeStartDate("2024-02-01");
 
-      expect(pushMock).toHaveBeenCalledWith("/dashboard?dateRange=2024-02", { scroll: false });
+      expect(pushMock).toHaveBeenCalledWith("/dashboard?from=2024-02-01", { scroll: false });
+    });
+
+    it("pushes the end date alongside the current start date and resets to page 1", async () => {
+      mockSearchParams = new URLSearchParams("from=2024-02-01&page=3");
+      mockedGetWeeklyTimesheets.mockResolvedValue(sampleResult);
+      render(<TimesheetDashboard />);
+      await screen.findByRole("table");
+
+      changeEndDate("2024-02-29");
+
+      expect(pushMock).toHaveBeenCalledWith("/dashboard?from=2024-02-01&to=2024-02-29", {
+        scroll: false,
+      });
     });
 
     it("omits the status param when the default 'Status' option is selected", async () => {
@@ -288,9 +304,9 @@ describe("TimesheetDashboard", () => {
   });
 
   describe("combined URL state", () => {
-    it("reads page, sort, order, status, and dateRange together", async () => {
+    it("reads page, sort, order, status, and date range together", async () => {
       mockSearchParams = new URLSearchParams(
-        "page=2&sort=startDate&order=desc&status=incomplete&dateRange=2024-03",
+        "page=2&sort=startDate&order=desc&status=incomplete&from=2024-03-01&to=2024-03-31",
       );
       mockedGetWeeklyTimesheets.mockResolvedValue({ ...multiPageResult, page: 2 });
       render(<TimesheetDashboard />);

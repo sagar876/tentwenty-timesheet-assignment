@@ -1,4 +1,6 @@
 import { computeStatus } from "@/features/timesheets/utils/timesheetStatus";
+import { sumHours } from "@/features/timesheets/utils/hours";
+import { filterTimesheetsByDateRange } from "@/features/timesheets/utils/dateRange";
 import type { EntryInput } from "@/features/timesheets/schemas/entrySchema";
 import type {
   SortDirection,
@@ -18,7 +20,7 @@ import {
 import { findProjectById } from "@/server/projects/mockProjects";
 
 function toSummary(week: MockWeek): WeekSummary {
-  const totalHours = getEntriesForWeek(week.id).reduce((sum, entry) => sum + entry.hours, 0);
+  const totalHours = sumHours(getEntriesForWeek(week.id).map((entry) => entry.hours));
   return {
     id: week.id,
     weekNumber: week.weekNumber,
@@ -65,12 +67,7 @@ export function getWeekSummaries(filters: WeekSummaryFilters = {}): WeekSummaryP
   if (filters.status) {
     summaries = summaries.filter((week) => week.status === filters.status);
   }
-  if (filters.from) {
-    summaries = summaries.filter((week) => week.endDate >= filters.from!);
-  }
-  if (filters.to) {
-    summaries = summaries.filter((week) => week.startDate <= filters.to!);
-  }
+  summaries = filterTimesheetsByDateRange(summaries, { from: filters.from, to: filters.to });
 
   summaries = sortSummaries(summaries, filters.sortBy ?? "weekNumber", filters.sortDir ?? "asc");
 

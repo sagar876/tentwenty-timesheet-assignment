@@ -74,7 +74,7 @@ describe("EntryModal", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
-  it("adjusts hours with the +/- buttons within 0.25-24 bounds", async () => {
+  it("adjusts hours with the +/- buttons within the 0.01-24 bounds", async () => {
     render(<EntryModal date="2024-01-01" onClose={jest.fn()} onSubmit={jest.fn()} />);
 
     const hoursInput = screen.getByLabelText(/^hours$/i);
@@ -85,7 +85,7 @@ describe("EntryModal", () => {
 
     fireEvent.click(screen.getByLabelText(/decrease hours/i));
     fireEvent.click(screen.getByLabelText(/decrease hours/i));
-    expect(hoursInput).toHaveValue(0.25);
+    expect(hoursInput).toHaveValue(0.01);
     expect(screen.getByLabelText(/decrease hours/i)).toBeDisabled();
   });
 
@@ -104,17 +104,30 @@ describe("EntryModal", () => {
     expect(onSubmit.mock.calls[0]![0]).toMatchObject({ hours: 7.5 });
   });
 
-  it("rejects hours that aren't in quarter-hour increments", async () => {
+  it("rejects hours with more than 2 decimal places", async () => {
     const onSubmit = jest.fn();
     render(<EntryModal date="2024-01-01" onClose={jest.fn()} onSubmit={onSubmit} />);
 
     await selectProject("Mobile App");
     fireEvent.change(screen.getByLabelText(/task description/i), { target: { value: "Something" } });
-    fireEvent.change(screen.getByLabelText(/^hours$/i), { target: { value: "1.3" } });
+    fireEvent.change(screen.getByLabelText(/^hours$/i), { target: { value: "1.123" } });
     fireEvent.click(screen.getByRole("button", { name: /add entry/i }));
 
-    expect(await screen.findByText(/increments of 0.25/i)).toBeInTheDocument();
+    expect(await screen.findByText(/at most 2 decimal places/i)).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("accepts an arbitrary decimal value that isn't a quarter-hour increment", async () => {
+    const onSubmit = jest.fn();
+    render(<EntryModal date="2024-01-01" onClose={jest.fn()} onSubmit={onSubmit} />);
+
+    await selectProject("Mobile App");
+    fireEvent.change(screen.getByLabelText(/task description/i), { target: { value: "Something" } });
+    fireEvent.change(screen.getByLabelText(/^hours$/i), { target: { value: "1.1" } });
+    fireEvent.click(screen.getByRole("button", { name: /add entry/i }));
+
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    expect(onSubmit.mock.calls[0]![0]).toMatchObject({ hours: 1.1 });
   });
 
   it("rejects negative hours", async () => {

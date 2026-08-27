@@ -49,7 +49,8 @@ This list only includes packages that are actually used in the project
   status for each one: Completed, Incomplete, or Missing.
 - A user can sort the list by Week #, Date, or Status. Clicking a column
   header again reverses the sort order.
-- A user can filter the list by date range and by status.
+- A user can filter the list by an arbitrary start/end date range (native
+  date pickers) and by status.
 - A user can open a week to see its entries, grouped by day, with a
   progress bar showing hours logged out of 40.
 - A user can add a new entry to any day in the week.
@@ -239,12 +240,6 @@ rather than building a full production system:
   status updates automatically based on its total hours. (Weeks were
   expanded from an initial 10 to 50 specifically so pagination has
   enough real data to page through.)
-- **The date range filter is a set of month presets** (January,
-  February, March), not a calendar picker. The design reference showed
-  a closed dropdown, so it wasn't clear which was intended — presets
-  were the simpler, safer choice. Weeks after March (added for
-  pagination) are reachable via "All dates" and sorting, just not
-  through a dedicated month preset.
 - **There are two test users**, both hardcoded — no sign-up flow,
   password reset, or real account management.
 - **"Type of work" is a fixed list** (Bug fixes, Feature development,

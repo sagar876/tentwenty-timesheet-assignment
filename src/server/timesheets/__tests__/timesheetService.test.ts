@@ -59,4 +59,36 @@ describe("weekly total hours with decimal entries", () => {
     deleteEntry("week-5", second.id);
     expect(getWeekDetail("week-5")!.week.totalHours).toBe(0);
   });
+
+  it("sums arbitrary-precision decimal hours without floating-point drift", () => {
+    requireEntry(
+      createEntry("week-20", {
+        date: "2024-05-13",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "First pass",
+        hours: 1.1,
+      }),
+    );
+    requireEntry(
+      createEntry("week-20", {
+        date: "2024-05-14",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "Second pass",
+        hours: 2.3,
+      }),
+    );
+    requireEntry(
+      createEntry("week-20", {
+        date: "2024-05-15",
+        projectId: "project-1",
+        typeOfWork: "Testing",
+        description: "Third pass",
+        hours: 4.75,
+      }),
+    );
+
+    expect(getWeekDetail("week-20")!.week.totalHours).toBe(8.15);
+  });
 });

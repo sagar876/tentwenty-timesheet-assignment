@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useFetch } from "@/hooks/useFetch";
 import { buildSearchParamsUrl } from "@/hooks/urlSearchParams";
 import { getWeeklyTimesheets } from "@/features/timesheets/services/timesheetsApi";
-import { TimesheetFilters, DATE_RANGE_OPTIONS } from "@/features/timesheets/components/dashboard/TimesheetFilters";
+import { TimesheetFilters } from "@/features/timesheets/components/dashboard/TimesheetFilters";
 import { TimesheetTable } from "@/features/timesheets/components/dashboard/TimesheetTable";
 import { TimesheetTableSkeleton } from "@/features/timesheets/components/dashboard/TimesheetTableSkeleton";
 import { Pagination } from "@/features/timesheets/components/dashboard/Pagination";
@@ -37,17 +37,10 @@ function parseStatus(value: string | null): TimesheetStatus | "" {
   return value !== null && (VALID_STATUSES as string[]).includes(value) ? (value as TimesheetStatus) : "";
 }
 
-// The URL uses each date range's own "from" month (e.g. "2024-01") rather than
-// its array index, so the value is stable/meaningful instead of arbitrary.
-function dateRangeIndexToParam(index: number): string | null {
-  const from = DATE_RANGE_OPTIONS[index]?.from;
-  return from ? from.slice(0, 7) : null;
-}
+const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-function parseDateRangeIndex(value: string | null): number {
-  if (!value) return 0;
-  const index = DATE_RANGE_OPTIONS.findIndex((option) => option.from?.slice(0, 7) === value);
-  return index === -1 ? 0 : index;
+function parseDateParam(value: string | null): string {
+  return value !== null && ISO_DATE_PATTERN.test(value) ? value : "";
 }
 
 export function TimesheetDashboard() {
@@ -59,24 +52,23 @@ export function TimesheetDashboard() {
   const sortBy = parseSortBy(searchParams.get("sort"));
   const sortDir = parseSortDir(searchParams.get("order"));
   const status = parseStatus(searchParams.get("status"));
-  const dateRangeIndex = parseDateRangeIndex(searchParams.get("dateRange"));
+  const from = parseDateParam(searchParams.get("from"));
+  const to = parseDateParam(searchParams.get("to"));
 
   const [pageSize, setPageSize] = useState(5);
-
-  const dateRange = DATE_RANGE_OPTIONS[dateRangeIndex]!;
 
   const { data, loading, error, refetch } = useFetch(
     () =>
       getWeeklyTimesheets({
         status: status || undefined,
-        from: dateRange.from,
-        to: dateRange.to,
+        from: from || undefined,
+        to: to || undefined,
         sortBy,
         sortDir,
         page,
         pageSize,
       }),
-    [status, dateRange.from, dateRange.to, sortBy, sortDir, page, pageSize],
+    [status, from, to, sortBy, sortDir, page, pageSize],
   );
 
   function navigate(updates: Record<string, string | null>, mode: "push" | "replace") {
@@ -100,8 +92,8 @@ export function TimesheetDashboard() {
     navigate({ status: next || null, page: null }, "push");
   }
 
-  function handleDateRangeChange(index: number) {
-    navigate({ dateRange: dateRangeIndexToParam(index), page: null }, "push");
+  function handleDateRangeChange(nextFrom: string, nextTo: string) {
+    navigate({ from: nextFrom || null, to: nextTo || null, page: null }, "push");
   }
 
   function handlePageSizeChange(next: number) {
@@ -120,7 +112,8 @@ export function TimesheetDashboard() {
         </h1>
         <div className="mt-4">
           <TimesheetFilters
-            dateRangeIndex={dateRangeIndex}
+            from={from}
+            to={to}
             onDateRangeChange={handleDateRangeChange}
             status={status}
             onStatusChange={handleStatusChange}

@@ -28,7 +28,6 @@ import {
   entrySchema,
   HOURS_MAX,
   HOURS_MIN,
-  HOURS_STEP,
   type EntryInput,
 } from "@/features/timesheets/schemas/entrySchema";
 import { TYPE_OF_WORK_OPTIONS, type TimesheetEntry, type TypeOfWork } from "@/features/timesheets/types/timesheet";
@@ -246,7 +245,7 @@ export function EntryModal({ date, entry, onClose, onSubmit }: EntryModalProps) 
                   type="number"
                   min={HOURS_MIN}
                   max={HOURS_MAX}
-                  step={HOURS_STEP}
+                  step="any"
                   inputMode="decimal"
                   aria-invalid={errors.hours ? "true" : "false"}
                   aria-describedby={errors.hours ? "hours-error" : undefined}
