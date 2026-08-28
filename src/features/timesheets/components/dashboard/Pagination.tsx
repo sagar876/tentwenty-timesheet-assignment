@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/select";
 
 const PAGE_SIZE_OPTIONS = [5, 10];
-const SIBLING_COUNT = 5;
+const SIBLING_COUNT = 1;
 
 type PageItem = number | "ellipsis";
 
@@ -72,7 +72,7 @@ export function Pagination({ page, pageSize, total, onPageChange, onPageSizeChan
         </Select>
       </div>
 
-      <div className="flex items-center gap-1 text-sm">
+      <div className="flex items-center gap-1 overflow-x-auto text-sm">
         <Button
           type="button"
           variant="ghost"

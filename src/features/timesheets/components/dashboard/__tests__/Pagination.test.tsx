@@ -53,11 +53,11 @@ describe("Pagination", () => {
         />,
       );
 
-      // Page 3 with a sibling window of 5 covers 1-8, leaving a gap before 99.
-      for (const pageNumber of [1, 2, 3, 4, 5, 6, 7, 8, 99]) {
+      // Page 3 with a sibling window of 1 covers 1-4, leaving a gap before 99.
+      for (const pageNumber of [1, 2, 3, 4, 99]) {
         expect(screen.getByRole("button", { name: String(pageNumber) })).toBeInTheDocument();
       }
-      expect(screen.queryByRole("button", { name: "9" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "5" })).not.toBeInTheDocument();
       expect(screen.getByText("…")).toBeInTheDocument();
     });
 
@@ -90,10 +90,10 @@ describe("Pagination", () => {
       expect(screen.getByRole("button", { name: "1" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "99" })).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "50" })).toHaveAttribute("aria-current", "page");
-      expect(screen.queryByRole("button", { name: "44" })).not.toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "45" })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: "55" })).toBeInTheDocument();
-      expect(screen.queryByRole("button", { name: "56" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "48" })).not.toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "49" })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: "51" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "52" })).not.toBeInTheDocument();
     });
   });
 });
