@@ -1,4 +1,5 @@
 import { XIcon } from "lucide-react";
+import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -8,7 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DateRangeFilter } from "@/features/timesheets/components/dashboard/DateRangeFilter";
+import { DateRangeFilter } from "@/components/common/DateRangeFilter";
+import { parseIsoDate, toIsoDate } from "@/features/timesheets/utils/format";
 import type { TimesheetStatus } from "@/features/timesheets/types/timesheet";
 
 const STATUS_OPTIONS: { label: string; value: TimesheetStatus | "all" }[] = [
@@ -36,9 +38,16 @@ export function TimesheetFilters({
   status,
   onStatusChange,
 }: TimesheetFiltersProps) {
+  function handleDateRangeChange(range: DateRange) {
+    onDateRangeChange(range.from ? toIsoDate(range.from) : "", range.to ? toIsoDate(range.to) : "");
+  }
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row">
-      <DateRangeFilter from={from} to={to} onDateRangeChange={onDateRangeChange} />
+      <DateRangeFilter
+        value={{ from: parseIsoDate(from), to: parseIsoDate(to) }}
+        onChange={handleDateRangeChange}
+      />
 
       {(from || to) && (
         <Button

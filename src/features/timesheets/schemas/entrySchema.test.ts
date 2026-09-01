@@ -44,7 +44,7 @@ describe("entrySchema", () => {
     expect(result.success).toBe(false);
   });
 
-  it.each([0.5, 1.1, 1.25, 1.5, 2.3, 4.75, 7.5, 8.5])(
+  it.each([0.5, 1.1, 1.25, 1.5, 2.3, 4.75, 7.5, 7.99])(
     "accepts %s decimal hours without truncating",
     (hours) => {
       const result = entrySchema.safeParse({ ...validInput, hours });

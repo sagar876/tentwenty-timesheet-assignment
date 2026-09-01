@@ -25,6 +25,10 @@ export function toIsoDate(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+export function parseIsoDate(value: string): Date | undefined {
+  return value ? new Date(`${value}T00:00:00`) : undefined;
+}
+
 export function getDatesInRange(startIso: string, endIso: string): string[] {
   const dates: string[] = [];
   const cursor = new Date(`${startIso}T00:00:00`);

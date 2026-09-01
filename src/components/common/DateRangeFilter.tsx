@@ -5,43 +5,54 @@ import type { DateRange } from "react-day-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { formatDateRange, formatDayLabel, toIsoDate } from "@/features/timesheets/utils/format";
 
-interface DateRangeFilterProps {
-  from: string;
-  to: string;
-  onDateRangeChange: (from: string, to: string) => void;
-}
+const LABEL_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  month: "short",
+  day: "numeric",
+  year: "numeric",
+});
 
-function parseIsoDate(value: string): Date | undefined {
-  return value ? new Date(`${value}T00:00:00`) : undefined;
-}
-
-function triggerLabel(from: string, to: string): string {
-  if (from && to) return formatDateRange(from, to);
-  if (from) return `${formatDayLabel(from)} - ...`;
-  return "Date Range";
+function formatTriggerLabel(value: DateRange, placeholder: string): string {
+  if (value.from && value.to) {
+    return `${LABEL_FORMATTER.format(value.from)} - ${LABEL_FORMATTER.format(value.to)}`;
+  }
+  if (value.from) return `${LABEL_FORMATTER.format(value.from)} - ...`;
+  return placeholder;
 }
 
 // Year dropdown navigation needs bounds, computed from "now" rather than a
-// fixed year so the range keeps making sense as time passes.
+// fixed year so the default range keeps making sense as time passes.
 const CURRENT_YEAR = new Date().getFullYear();
-const CALENDAR_START_MONTH = new Date(CURRENT_YEAR - 20, 0, 1);
-const CALENDAR_END_MONTH = new Date(CURRENT_YEAR, 11, 31);
+const DEFAULT_START_MONTH = new Date(CURRENT_YEAR - 20, 0, 1);
+const DEFAULT_END_MONTH = new Date(CURRENT_YEAR, 11, 31);
 
-export function DateRangeFilter({ from, to, onDateRangeChange }: DateRangeFilterProps) {
+interface DateRangeFilterProps {
+  value: DateRange;
+  onChange: (value: DateRange) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  startMonth?: Date;
+  endMonth?: Date;
+}
+
+export function DateRangeFilter({
+  value,
+  onChange,
+  placeholder = "Date Range",
+  ariaLabel = placeholder,
+  startMonth = DEFAULT_START_MONTH,
+  endMonth = DEFAULT_END_MONTH,
+}: DateRangeFilterProps) {
   const [open, setOpen] = useState(false);
-  const [pending, setPending] = useState<DateRange>({ from: parseIsoDate(from), to: parseIsoDate(to) });
+  const [pending, setPending] = useState<DateRange>(value);
 
   function handleOpenChange(nextOpen: boolean) {
-    if (nextOpen) {
-      setPending({ from: parseIsoDate(from), to: parseIsoDate(to) });
-    }
+    if (nextOpen) setPending(value);
     setOpen(nextOpen);
   }
 
   function handleApply() {
-    onDateRangeChange(pending.from ? toIsoDate(pending.from) : "", pending.to ? toIsoDate(pending.to) : "");
+    onChange(pending);
     setOpen(false);
   }
 
@@ -51,10 +62,10 @@ export function DateRangeFilter({ from, to, onDateRangeChange }: DateRangeFilter
         <Button
           type="button"
           variant="outline"
-          aria-label="Date range"
+          aria-label={ariaLabel}
           className="h-auto justify-start rounded-md border-gray-300 px-3 py-2 text-sm font-normal text-gray-700"
         >
-          {triggerLabel(from, to)}
+          {formatTriggerLabel(value, placeholder)}
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-auto p-0">
@@ -64,8 +75,8 @@ export function DateRangeFilter({ from, to, onDateRangeChange }: DateRangeFilter
           onSelect={(range) => setPending(range ?? { from: undefined, to: undefined })}
           defaultMonth={pending.from}
           captionLayout="dropdown"
-          startMonth={CALENDAR_START_MONTH}
-          endMonth={CALENDAR_END_MONTH}
+          startMonth={startMonth}
+          endMonth={endMonth}
         />
         <div className="flex justify-end border-t border-gray-200 p-2">
           <Button type="button" onClick={handleApply} disabled={!pending.from} className="h-auto px-4 py-2 text-sm">

@@ -58,10 +58,10 @@ This list only includes packages that are actually used in the project
   entry (the three-dot menu).
 - Deleting an entry asks for confirmation first.
 - If a form is submitted with missing or invalid fields (for example, no
-  project selected, or hours outside 0.25–24), the form shows an error
+  project selected, or hours outside 0.01–8), the form shows an error
   message under each field and does not submit.
-- Hours accept decimals in quarter-hour steps (0.25), from 0.25 to 24
-  per entry — e.g. 7.5 or 2.25 are valid.
+- Hours accept up to 2 decimal places, from 0.01 to 8 per entry — e.g.
+  7.5 or 2.25 are valid.
 - "Remember me" on login persists the session across browser restarts
   when checked (and expires with the browser session when unchecked),
   and separately remembers the email address for next time — the

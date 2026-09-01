@@ -9,7 +9,7 @@ import { getWeeklyTimesheets } from "@/features/timesheets/services/timesheetsAp
 import { TimesheetFilters } from "@/features/timesheets/components/dashboard/TimesheetFilters";
 import { TimesheetTable } from "@/features/timesheets/components/dashboard/TimesheetTable";
 import { TimesheetTableSkeleton } from "@/features/timesheets/components/dashboard/TimesheetTableSkeleton";
-import { Pagination } from "@/features/timesheets/components/dashboard/Pagination";
+import { Pagination } from "@/components/common/Pagination";
 import type { SortDirection, TimesheetStatus, WeekSortField } from "@/features/timesheets/types/timesheet";
 
 const VALID_SORT_FIELDS: WeekSortField[] = ["weekNumber", "startDate", "status"];
